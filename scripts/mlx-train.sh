@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# Remove debug mode - we'll use our own debug function
+# set -x  # Remove this line
+
+# Add debug function
+debug() {
+    if [[ "${MLX_DEBUG}" == "1" ]]; then
+        echo "DEBUG: $*" >&2
+    fi
+}
+
+# Initialize
+debug "Script starting..."
+
+# Check MLX availability quietly
+python3 -c 'import mlx' 2>/dev/null || {
+    echo "Error: MLX not found. Please install MLX first."
+    exit 1
+}
+
 # Set environment variables
 export PYTHONPATH="."
 export MLX_DISTRIBUTED="1"
@@ -111,7 +130,9 @@ type_text() {
 
 # Update show_welcome
 show_welcome() {
-    clear_screen
+    # Clear screen and move to top
+    printf "\033c"
+    
     echo -e "${BLUE}"
     cat << "EOF"
 ╔══════════════════════════════════════════════════════════╗
@@ -121,13 +142,13 @@ show_welcome() {
 ║ | |  | | |___  /  \    | | | | | (_| || || | | |         ║
 ║ |_|  |_|_____|/_/\_\   |_| |_|  \__,_||_||_| |_|         ║
 ║                                                          ║
-║   🚀  Distributed Training on Apple Silicon              ║
+║     🚀 Distributed Training on Apple Silicon             ║
 ╚══════════════════════════════════════════════════════════╝
 EOF
-    echo -e "${NC}\n\n"
+    echo -e "${NC}\n"
     
     echo -ne "${GREEN}"
-    type_text "Welcome to MLX Train!"
+    echo "Welcome to MLX Train!"
     echo -e "${NC}"
     
     echo -e "\n${YELLOW}Your high-performance distributed AI model training framework:${NC}\n"
@@ -136,7 +157,8 @@ EOF
     echo -e "🤖 Build your own AI model"
     echo -e "🚀 Train efficiently across devices"
     echo -e "🌐 Deploy and share your model"
-    echo -e "\n\n"
+    echo -e "\n"
+    
     read -p "Press Enter to begin your journey..."
 }
 
@@ -205,7 +227,7 @@ from mlx_train.core.hardware import HardwareConfig
 config = HardwareConfig()
 flops = config.total_tflops
 
-print(f'┌──────────────────────────────────────────────┐')
+print(f'┌────────────────────────────────────────────────┐')
 print(f'│ Your Hardware:                                 │')
 print(f'│ • Device: Apple Silicon                       │')
 print(f'│ • Memory: {config.total_memory_gb:.1f}GB available              │')
@@ -216,7 +238,7 @@ print(f'\n{BLUE}📊 Estimated Performance:{NC}')
 print(f'┌────────────────────────────────────────────────┐')
 print(f'│ Model Size     Training Time    Memory Usage   │')
 print(f'│ ──────────────────────────────────────────── │')
-print(f'│ Small (0.5B)   {0.5 * 3600 / flops:.1f} hours      {0.5:.1f}GB         │')
+print(f' Small (0.5B)   {0.5 * 3600 / flops:.1f} hours      {0.5:.1f}GB         │')
 print(f'│ Medium (2B)    {2.0 * 3600 / flops:.1f} hours      {2.0:.1f}GB         │')
 print(f'│ Large (7B)     {7.0 * 3600 / flops:.1f} hours      {7.0:.1f}GB         │')
 print(f'└────────────────────────────────────────────────┘')
@@ -782,7 +804,7 @@ show_step() {
     clear_screen
     show_header
     
-    # Add top spacing
+    
     echo -e "\n\n"
     
     echo -e "${BLUE}┌────────────────────────────────────────────┐${NC}"
@@ -790,7 +812,7 @@ show_step() {
     echo -e "${BLUE}│${NC} ${GREEN}${description}${NC}                                ${BLUE}│${NC}"
     echo -e "${BLUE}└────────────────────────────────────────────┘${NC}"
     
-    # Add bottom spacing
+   
     echo -e "\n\n"
 }
 
@@ -801,7 +823,7 @@ show_training_status() {
     local loss=$3
     local throughput=$4
     
-    echo -ne "\033[K"  # Clear line
+    echo -ne "\033[K"  
     
     # Show epoch progress with gradient
     local width=40
@@ -841,22 +863,22 @@ for i in range(config.num_devices):
     "
 }
 
-# Add to main():
+
 add_spacing() {
-    echo -e "\n\n"  # Double spacing
+    echo -e "\n\n"  
 }
 
-# Update transition_step for smoother transitions
+
 transition_step() {
     local from=$1
     local to=$2
     
-    # Fade out current step
+    
     clear_screen
     show_header
     echo -e "\n${BLUE}Completing Step ${from}...${NC}"
     
-    # Animated progress dots
+   
     for i in {1..4}; do
         echo -ne "${BLUE}."
         sleep 0.15
@@ -864,14 +886,14 @@ transition_step() {
         sleep 0.15
     done
     
-    # Show completion
+    
     echo -e "\n${GREEN}✓ Step ${from} Complete${NC}"
     sleep 0.5
     
-    # Transition to next step
+    
     echo -e "\n${BLUE}Preparing Step ${to}${NC}"
     
-    # Gradient progress bar
+    
     local width=40
     for i in $(seq 1 $width); do
         local gradient=$((i * 4 / width))
@@ -889,7 +911,7 @@ transition_step() {
     clear_screen
 }
 
-# Add progress tracking
+
 show_progress_bar() {
     local current=$1
     local total=$2
@@ -908,35 +930,103 @@ show_progress_bar() {
     echo -ne "] ${GREEN}${current}/${total}${NC}\n"
 }
 
-# Update main() to use transitions:
+
 main() {
+    
+    printf "\033c"
+    
     TOTAL_STEPS=8
     
+    # Step 0: Welcome
     show_welcome
+    echo -e "\n\n"  # Add extra spacing
+    sleep 1
+    
+    # Step 1: Environment Setup
     show_step 1 "Environment Setup"
     setup_environment
+    show_progress_bar 1 $TOTAL_STEPS
+    echo -e "\n\n"  
+    read -p "Press Enter to continue..."
+    transition_step 1 2
     
+    # Step 2: Hardware Detection
     show_step 2 "Hardware Detection"
     show_hardware_status
+    echo -e "\n"  
     show_performance_estimates
+    setup_distributed
+    show_progress_bar 2 $TOTAL_STEPS
+    echo -e "\n\n"
+    read -p "Press Enter to continue..."
+    transition_step 2 3
     
+    # Step 3: Model Building
     show_step 3 "Model Building"
     build_model
+    show_model_architecture "$selected_model"
+    show_progress_bar 3 $TOTAL_STEPS
+    echo -e "\n\n"
+    read -p "Press Enter to continue..."
+    transition_step 3 4
     
+    # Step 4: Dataset Selection
     show_step 4 "Dataset Configuration"
     setup_dataset
+    show_dataset_preview "$dataset_type"
+    show_progress_bar 4 $TOTAL_STEPS
+    echo -e "\n\n"
+    read -p "Press Enter to continue..."
+    transition_step 4 5
     
+    # Step 5: Training Configuration
     show_step 5 "Training Configuration"
     configure_training
+    show_progress_bar 5 $TOTAL_STEPS
+    echo -e "\n\n"
+    read -p "Press Enter to start training..."
+    transition_step 5 6
     
+    # Step 6: Training
     show_step 6 "Model Training"
     run_training
+    show_training_metrics
+    manage_checkpoints
+    show_progress_bar 6 $TOTAL_STEPS
+    echo -e "\n\n"
+    read -p "Press Enter to continue..."
+    transition_step 6 7
     
+    # Step 7: Model Inference
     show_step 7 "Model Inference"
+    validate_model
     run_inference
+    show_progress_bar 7 $TOTAL_STEPS
+    echo -e "\n\n"
+    read -p "Press Enter to continue..."
+    transition_step 7 8
     
+    # Step 8: Export & Deploy
     show_step 8 "Export & Deploy"
     export_model
+    show_progress_bar 8 $TOTAL_STEPS
+    echo -e "\n\n"
+    
+    # Final completion message
+    clear_screen
+    echo -e "\n${GREEN}✨ Journey Complete!${NC}"
+    echo -e "\n${BLUE}Your model is ready:${NC}"
+    echo -e "📊 Results: ./experiments"
+    echo -e "💾 Model: ./exports"
+    echo -e "🌐 API: http://localhost:8000"
+    echo -e "\n"
+    
+    # Final tips
+    echo -e "${YELLOW}Next Steps:${NC}"
+    echo -e "1. Start the API server:   mlx-train serve"
+    echo -e "2. Run inference:          mlx-train infer"
+    echo -e "3. View metrics:           mlx-train show-metrics"
+    echo -e "\n"
 }
 
 # menu selection function
@@ -1279,4 +1369,43 @@ else:
     print(f"• Issue: {state['diagnosis']}")
     print(f"• Suggestion: {state['suggestion']}")
 EOF
-} 
+}
+
+# Add after environment variables
+setup_python_env() {
+    echo "Setting up Python environment..."
+    
+    # Check Python version
+    python3 --version || {
+        echo "Error: Python3 not found"
+        exit 1
+    }
+    
+    # Check pip
+    pip3 --version || {
+        echo "Error: pip3 not found"
+        exit 1
+    }
+    
+    # Try importing key dependencies
+    python3 - <<EOF
+try:
+    import mlx
+    print("MLX available")
+except ImportError:
+    print("MLX not installed")
+    exit(1)
+EOF
+}
+
+# Call this function early
+setup_python_env
+
+# Execute main function
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Disable command printing
+    set +x
+    
+    # Run main
+    main
+fi

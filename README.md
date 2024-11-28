@@ -54,6 +54,8 @@ That's it! The script will:
 - 🚀 Guide you through model training
 - 🌐 Deploy your model locally
 
+See [quickstart](docs/getting_started/quickstart.md) for more details.
+
 Watch your model train with real-time visualizations:
 
 ```bash
@@ -149,6 +151,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 [Installation](docs/installation.md)
 [Examples](docs/examples.md)
 [Core Concepts](docs/core.md)
+[Roadmap](docs/ROADMAP.md)
 
 ## 🔬 Examples
 
