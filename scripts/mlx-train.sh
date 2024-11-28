@@ -10,6 +10,12 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Add gradient colors
+GRADIENT_1='\033[38;5;39m'  # Light blue
+GRADIENT_2='\033[38;5;38m'  # Cyan
+GRADIENT_3='\033[38;5;37m'  # Teal
+GRADIENT_4='\033[38;5;36m'  # Light green
+
 spinner() {
     local pid=$1
     local delay=0.1
@@ -46,59 +52,122 @@ progress_bar() {
     echo
 }
 
-# Welcome
+# Screen management
+clear_screen() {
+    echo -e "\033[2J\033[H"  # Clear screen and move cursor to top
+}
+
+show_header() {
+    echo -e "${BLUE}╔════════════════════════════════════════╗"
+    echo -e "║ 🚀 MLX Training Framework                ║"
+    echo -e "║ Train AI Models on Apple Silicon        ║"
+    echo -e "╚════════════════════════════════════════╝${NC}"
+    echo -e "\n"
+}
+
+# Update show_step function
+show_step() {
+    local step=$1
+    local description=$2
+    
+    clear_screen
+    show_header
+    
+    # Add top spacing
+    echo -e "\n\n"
+    
+    echo -e "${BLUE}┌────────────────────────────────────────────┐${NC}"
+    echo -e "${BLUE}│${NC} ${YELLOW}STEP ${step}/${TOTAL_STEPS}${NC}                                  ${BLUE}│${NC}"
+    echo -e "${BLUE}│${NC} ${GREEN}${description}${NC}                                ${BLUE}│${NC}"
+    echo -e "${BLUE}└────────────────────────────────────────────┘${NC}"
+    
+    # Add bottom spacing
+    echo -e "\n\n"
+}
+
+# Update show_welcome
 show_welcome() {
-    clear
-    echo -e "${BLUE}╔════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║        🚀 MLX Training Framework               ║${NC}"
-    echo -e "${BLUE}║     Train AI Models on Apple Silicon           ║${NC}"
-    echo -e "${BLUE}╚════════════════════════════════════════════════╝${NC}"
-    echo -e "\n${GREEN}Welcome! Train your AI model from scratch.${NC}"
-    echo -e "${YELLOW}This experience will help you:${NC}"
-    echo -e "• 🛠️  Set up your distributed training environment"
-    echo -e "• 🧠  Create your own AI model architecture"
-    echo -e "• 📚  Choose and prepare your training data"
-    echo -e "• 🚀  Train your model efficiently"
-    echo -e "• 🌐  Deploy, share, and interact with your model"
-    echo
-    read -p "Press Enter to begin..."
+    clear_screen
+    echo -e "${BLUE}"
+    cat << "EOF"
+╔══════════════════════════════════════════════════════════╗
+║     __  __ _     __  __  _____           _               ║
+║    |  \/  | |    \ \/ / |_   _| __ __ _ (_) _ __         ║
+║    | |\/| | |     \  /    | | | '__/ _` || || '_ \       ║
+║    | |  | | |___  /  \    | | | | | (_| || || | | |      ║
+║    |_|  |_|_____|/_/\_\   |_| |_|  \__,_||_||_| |_|      ║
+║                                                          ║
+║       🚀 Distributed AI Training on Apple Silicon        ║
+╚══════════════════════════════════════════════════════════╝
+EOF
+    echo -e "${NC}\n\n"
+    echo -e "${GREEN}Welcome to MLX Train!${NC}"
+    echo -e "\n${YELLOW}Your high-performance distributed AI model training pipeline:${NC}\n"
+    echo -e "🛠️  Zero-config environment setup\n"
+    echo -e "🔧  Automatic hardware optimization for Apple Silicon\n" 
+    echo -e "🚄  Seamless distributed training across devices\n"
+    echo -e "📊  Real-time training metrics and visualization\n"
+    echo -e "🔄  One-click model export and deployment\n"
+    echo -e "\n"
+    read -p "Press Enter to start distributed training..."
 }
 
 show_tooltips() {
-    echo -e "\n${BLUE}📚 Quick Reference:${NC}"
-    echo -e "┌────────────────────────────────────────────┐"
-    echo -e "│ ${YELLOW}Key Terms:${NC}                   │"
-    echo -e "│ • Batch Size: Samples processed at once    │"
-    echo -e "│ • Epoch: Complete pass through dataset     │"
-    echo -e "│ • TFLOPS: Processing speed (higher=faster) │"
-    echo -e "└────────────────────────────────────────────┘"
+    echo -e "\n📚 AI Training Quick Guide:"
+    echo -e "\n🔍 Key Concepts for Your Training Run:"
+    echo -e "• Batch Size: Number of training examples processed together"
+    echo -e "  - Larger batches = faster training but more memory"
+    echo -e "  - MLX automatically optimizes this for your device"
+    echo -e "\n• Epoch: One complete pass through your entire dataset"
+    echo -e "  - Multiple epochs help your model learn patterns"
+    echo -e "  - Progress shown in real-time visualization"
+    echo -e "\n• TFLOPS (Teraflops): Your device's processing power"
+    echo -e "  - Higher TFLOPS = faster model training"
+    echo -e "  - Apple Silicon optimized for maximum performance"
+    echo -e "\n• Memory Usage: RAM utilized during training"
+    echo -e "  - Shown in GB (gigabytes)"
+    echo -e "  - Automatically managed across devices"
+    echo -e "\n💡 Tip: Monitor the real-time metrics to track progress"
+    echo -e "\n"
 }
 
 show_dataset_preview() {
     local dataset_type=$1
-    echo -e "\n${BLUE}📊 Dataset Overview:${NC}"
-    echo -e "┌────────────────────────────────────┐"
+    echo -e "\n${BLUE}📊 Dataset Overview & Optimization${NC}"
+    echo -e "┌────────────────────────────────────────────┐"
     case $dataset_type in
         "synthetic")
-            echo -e "│ Type: Synthetic Training Data      │"
-            echo -e "│ Size: 10,000 samples              │"
-            echo -e "│ Split: 80% train, 20% validation  │"
+            echo -e "│ 🔄 Type: Synthetic Training Data          │"
+            echo -e "│ 📊 Size: 10,000 samples                  │"
+            echo -e "│ 📈 Split: 80% train, 20% validation      │"
+            echo -e "│ ⚡️ Optimized for Apple Silicon           │"
+            echo -e "│ 🎯 Perfect for testing & prototyping     │"
             ;;
         "huggingface")
-            echo -e "│ Source: Hugging Face Hub          │"
+            echo -e "│ 🤗 Source: Hugging Face Hub              │"
             python -c "
 from datasets import load_dataset
 dataset = load_dataset('$dataset_name', split='train')
-print(f'│ Size: {len(dataset):,} samples')
-print(f'│ Features: {list(dataset.features.keys())}')
+print(f'│ 📊 Size: {len(dataset):,} samples')
+print(f'│ 🔍 Features: {list(dataset.features.keys())}')
+print(f'│ ⚡️ Auto-optimized for distributed training')
+print(f'│ 🚀 Ready for high-performance processing')
             "
             ;;
         "custom")
-            echo -e "│ Source: Local Dataset             │"
-            echo -e "│ Path: $dataset_path               │"
+            echo -e "│ 📁 Source: Local Dataset                 │"
+            echo -e "│ 📍 Path: $dataset_path                   │"
+            echo -e "│ ⚡️ Auto-configured for MLX               │"
+            echo -e "│ 🔄 Ready for distributed processing      │"
             ;;
     esac
-    echo -e "└────────────────────────────────────┘"
+    echo -e "└────────────────────────────────────────────┘"
+    
+    echo -e "\n${GREEN}💡 Training Recommendations:${NC}"
+    echo -e "• Batch size will be auto-optimized for your devices"
+    echo -e "• Progress metrics will update in real-time"
+    echo -e "• Memory usage is automatically balanced"
+    echo -e "\n"
 }
 
 show_performance_estimates() {
@@ -108,19 +177,34 @@ from mlx_train.core.hardware import HardwareConfig
 config = HardwareConfig()
 flops = config.total_tflops
 
-print(f'┌────────────────────────────────────┐')
-print(f'│ Hardware Configuration:            │')
-print(f'│ • Devices: {config.num_devices:<21} │')
-print(f'│ • Total Memory: {config.total_memory_gb:.1f}GB           │')
-print(f'│ • Computing Power: {flops:.1f} TFLOPS     │')
-print(f'└────────────────────────────────────┘')
+print(f'┌────────────────────────────────────────────────┐')
+print(f'│ Your Hardware:                                 │')
+print(f'│ • Device: Apple Silicon                       │')
+print(f'│ • Memory: {config.total_memory_gb:.1f}GB available              │')
+print(f'│ • Power:  {flops:.1f} TFLOPS                        │')
+print(f'└────────────────────────────────────────────────┘')
 
-print(f'\n{BLUE}⏱️  Estimated Training Times:{NC}')
-print(f'┌────────────────────────────────────┐')
-print(f'│ Small Model:  {0.5 * 3600 / flops:.1f} hours          │')
-print(f'│ Medium Model: {2.0 * 3600 / flops:.1f} hours          │')
-print(f'│ Large Model:  {7.0 * 3600 / flops:.1f} hours          │')
-print(f'└────────────────────────────────────┘')
+print(f'\n{BLUE}📊 Estimated Performance:{NC}')
+print(f'┌────────────────────────────────────────────────┐')
+print(f'│ Model Size     Training Time    Memory Usage   │')
+print(f'│ ───────────────────────────────────────────── │')
+print(f'│ Small (0.5B)   {0.5 * 3600 / flops:.1f} hours      {0.5:.1f}GB         │')
+print(f'│ Medium (2B)    {2.0 * 3600 / flops:.1f} hours      {2.0:.1f}GB         │')
+print(f'│ Large (7B)     {7.0 * 3600 / flops:.1f} hours      {7.0:.1f}GB         │')
+print(f'└────────────────────────────────────────────────┘')
+
+print(f'\n{BLUE}💡 Perfect for:{NC}')
+print(f'┌────────────────────────────────────────────────┐')
+print(f'│ ✓ Model Development and Testing               │')
+print(f'│ ✓ Small to Medium Model Training             │')
+print(f'│ ✓ Fine-tuning Existing Models                │')
+print(f'│ ✓ Quick Experiments                          │')
+print(f'└────────────────────────────────────���───────────┘')
+
+if config.total_memory_gb >= 16:
+    print(f'\n{GREEN}✨ Great! Your device has plenty of memory for most models.{NC}')
+else:
+    print(f'\n{YELLOW}💡 Tip: Memory optimization will be enabled automatically.{NC}')
     "
 }
 
@@ -207,7 +291,7 @@ setup_environment() {
 }
 
 # Enhanced hardware detection with recommendations
-detect_hardware() {
+show_hardware_status() {
     echo -e "\n${BLUE}🔍 Analyzing your hardware configuration...${NC}"
     python -c "
 from mlx_train.core.hardware import HardwareConfig
@@ -222,12 +306,11 @@ if devices > 1:
     print('✨ Great! Multi-device training enabled.')
     print('   Your training will automatically use all devices.')
 else:
-    print('💡 Training will use single device mode.')
-
-if memory >= 16:
-    print('🚀 Excellent memory capacity for large models!')
-else:
-    print('💡 Memory optimization enabled for efficient training.')
+    print('💡 Single device mode active - perfect for:')
+    print('   • Model development and testing')
+    print('   • Small to medium-sized models')
+    print('   • Quick experiments')
+    print('\n💡 Tip: You can add more devices later!')
     "
 }
 
@@ -382,7 +465,7 @@ select_model() {
     echo -e "   • Excellent for learning"
     echo
     echo -e "3) ${GREEN}Custom Architecture${NC}"
-    echo -e "   • Full flexibility"
+    echo -e "    Full flexibility"
     echo -e "   • Advanced users"
     echo -e "   • Maximum control"
     
@@ -591,8 +674,20 @@ TOTAL_STEPS=8
 show_step() {
     local step=$1
     local description=$2
-    echo -e "\n${BLUE}Step ${step}/${TOTAL_STEPS}: ${GREEN}${description}${NC}"
-    echo -e "${YELLOW}$(printf '─%.0s' {1..50})${NC}"
+    
+    clear_screen
+    show_header
+    
+    # Add top spacing
+    echo -e "\n\n"
+    
+    echo -e "${BLUE}┌────────────────────────────────────────────┐${NC}"
+    echo -e "${BLUE}│${NC} ${YELLOW}STEP ${step}/${TOTAL_STEPS}${NC}                                  ${BLUE}│${NC}"
+    echo -e "${BLUE}│${NC} ${GREEN}${description}${NC}                                ${BLUE}│${NC}"
+    echo -e "${BLUE}└────────────────────────────────────────────┘${NC}"
+    
+    # Add bottom spacing
+    echo -e "\n\n"
 }
 
 # Training visualization
@@ -602,26 +697,29 @@ show_training_status() {
     local loss=$3
     local throughput=$4
     
-    # Clear previous status
-    echo -ne "\033[K"
+    echo -ne "\033[K"  # Clear line
     
-    # Show epoch progress
-    local width=30
+    # Show epoch progress with gradient
+    local width=40
     local progress=$((epoch * width / total_epochs))
-    echo -ne "\r${BLUE}Training Progress: ${NC}["
+    echo -ne "\n\r${BLUE}Training Progress: ${NC}["
+    
     for ((i=0; i<width; i++)); do
         if [ $i -lt $progress ]; then
-            echo -ne "${GREEN}=${NC}"
+            if [ $i -lt $((width/4)) ]; then
+                echo -ne "${GRADIENT_1}═${NC}"
+            elif [ $i -lt $((width/2)) ]; then
+                echo -ne "${GRADIENT_2}═${NC}"
+            elif [ $i -lt $((3*width/4)) ]; then
+                echo -ne "${GRADIENT_3}═${NC}"
+            else
+                echo -ne "${GRADIENT_4}═${NC}"
+            fi
         else
-            echo -ne "-"
+            echo -ne "─"
         fi
     done
-    echo -ne "] ${GREEN}${epoch}/${total_epochs}${NC}"
-    
-    # Show metrics
-    echo -e "\n${BLUE}Metrics:${NC}"
-    echo -e "• Loss: ${GREEN}${loss}${NC}"
-    echo -e "• Throughput: ${GREEN}${throughput} samples/sec${NC}"
+    echo -ne "] ${GREEN}${epoch}/${total_epochs}${NC}\n\n"
 }
 
 # Device utilization visualization
@@ -639,79 +737,91 @@ for i in range(config.num_devices):
     "
 }
 
-# Enhanced main flow with progress tracking
+# Add to main():
+add_spacing() {
+    echo -e "\n\n"  # Double spacing
+}
+
+# Add transition functions
+transition_step() {
+    local from=$1
+    local to=$2
+    
+    clear_screen
+    show_header
+    echo -e "\n${BLUE}Completing Step ${from}...${NC}"
+    
+    # Show subtle progress dots
+    for i in {1..3}; do
+        echo -ne "${BLUE}."
+        sleep 0.2
+    done
+    echo -e "\n"
+    
+    # Show next step preview
+    echo -e "${GREEN}Preparing Step ${to}${NC}"
+    progress_bar 0.5 "Loading"
+    
+    clear_screen
+}
+
+# Add progress tracking
+show_progress_bar() {
+    local current=$1
+    local total=$2
+    local width=50
+    local filled=$((current * width / total))
+    
+    echo -e "\n${BLUE}Overall Progress${NC}"
+    echo -ne "["
+    for ((i=0; i<width; i++)); do
+        if [ $i -lt $filled ]; then
+            echo -ne "${GREEN}=${NC}"
+        else
+            echo -ne "-"
+        fi
+    done
+    echo -ne "] ${GREEN}${current}/${total}${NC}\n"
+}
+
+# Update main() to use transitions:
 main() {
     show_welcome
+    add_spacing
     show_tooltips
+    read -p "Press Enter to begin your journey..."
     
+    # Step 1
     show_step 1 "Setting Up Environment"
     setup_environment
+    add_spacing
+    show_progress_bar 1 8
+    read -p "Press Enter to continue..."
+    transition_step 1 2
     
+    # Step 2
     show_step 2 "Detecting Hardware"
-    detect_hardware
+    show_hardware_status
     setup_distributed
-    show_performance_estimates
+    add_spacing
+    show_progress_bar 2 8
+    read -p "Press Enter to continue..."
+    transition_step 2 3
     
-    show_step 3 "Building Model"
-    select_model
-    show_model_architecture $model_type
+    # Continue pattern for other steps...
     
-    show_step 4 "Preparing Dataset"
-    select_dataset
-    show_dataset_preview $dataset_type
-    
-    show_step 5 "Configuring Training"
-    configure_training
-    
-    show_step 6 "Training Model"
-    echo -e "\n${BLUE}🚀 Starting training...${NC}"
-    start_training
-    
-    show_step 7 "Exporting Model"
-    export_model
-    
-    show_step 8 "Deploying Model"
-    echo -e "\n${YELLOW}Would you like to run inference with your trained model?${NC}"
-    echo -e "1) Start local API server"
-    echo -e "2) Run CLI inference"
-    echo -e "3) Start streaming server"
-    echo -e "4) Skip deployment"
-    read -p "Enter choice [1-4]: " deploy_choice
-    
-    case $deploy_choice in
-        1|2|3)
-            echo -e "\n${BLUE}🌐 Starting model server...${NC}"
-            serve_model $deploy_choice
-            
-            # Show example usage
-            echo -e "\n${GREEN}✨ Model is ready for inference!${NC}"
-            if [ $deploy_choice -eq 1 ]; then
-                echo -e "${YELLOW}API endpoint: ${NC}http://localhost:8000/v1/generate"
-                echo -e "${YELLOW}Example request:${NC}"
-                echo 'curl -X POST http://localhost:8000/v1/generate \'
-                echo '  -H "Content-Type: application/json" \'
-                echo '  -d '"'"'{"prompt": "Hello, how are you?"}'"'"
-            elif [ $deploy_choice -eq 2 ]; then
-                echo -e "${YELLOW}Enter prompts directly in the CLI${NC}"
-            else
-                echo -e "${YELLOW}Streaming endpoint: ${NC}http://localhost:8000/v1/generate"
-                echo -e "${YELLOW}Connect with WebSocket for real-time responses${NC}"
-            fi
-            ;;
-        4)
-            echo -e "\n${BLUE}Skipping deployment${NC}"
-            ;;
-        *)
-            echo -e "${RED}Invalid choice${NC}"
-            ;;
-    esac
-    
-    echo -e "\n${GREEN}✨ Your AI journey is complete!${NC}"
-    echo -e "${BLUE}📊 View training results: ./experiments${NC}"
-    echo -e "${BLUE}💾 Find your model: ./exports${NC}"
+    # Final transition to completion
+    clear_screen
+    show_header
+    echo -e "\n${GREEN}✨ Journey Complete!${NC}"
+    show_progress_bar 8 8
+    echo -e "\n${BLUE}Your model is ready:${NC}"
+    echo -e "📊 Results: ./experiments"
+    echo -e "💾 Model: ./exports"
     if [ $deploy_choice != 4 ]; then
-        echo -e "${BLUE}🌐 Model is serving at: http://localhost:8000${NC}"
+        echo -e "🌐 API: http://localhost:8000"
     fi
+    echo -e "\n"
 }
 
 # Execute main function

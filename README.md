@@ -1,19 +1,35 @@
 # 🚀 MLX Distributed Training Framework
 
-```bash
-┌─────────────────────┐      ┌─────────────────────┐
-│   MacBook Pro M3    │      │   MacBook Air M2    │
-│   Training Node 1   │◄────►│   Training Node 2   │
-└─────────────────────┘      └─────────────────────┘
-          ▲                           ▲
-          │                           │
-          └───────────┐     ┌────────┘
-                    ┌─▼─────▼─┐
-                    │ Dataset │
-                    └─────────┘
-```
-
 Train and deploy AI models across multiple Apple Silicon devices with automatic hardware optimization and a seamless developer experience. A user-friendly CLI framework for distributed training, powered by MLX.
+
+```bash
+╔══════════════════════════════════════════════════════════╗
+║  __  __ _     __  __  _____           _                  ║
+║ |  \/  | |    \ \/ / |_   _| __ __ _ (_) _ __            ║
+║ | |\/| | |     \  /    | | | '__/ _` || || '_ \          ║
+║ | |  | | |___  /  \    | | | | | (_| || || | | |         ║
+║ |_|  |_|_____|/_/\_\   |_| |_|  \__,_||_||_| |_|         ║
+║                                                          ║
+║          Distributed Training on Apple Silicon           ║
+╚══════════════════════════════════════════════════════════╝
+
+┌─────────────────┐      ┌─────────────────┐
+│   MacBook Pro   │  ←→  │   MacBook Air   │  Training
+│    Node 1       │      │    Node 2       │  Cluster
+└────────┬────────┘      └────────┬────────┘
+         │                        │
+         └──────────┬────────────┘
+                    ▼
+         ┌──────────────────────┐
+         │    MLX Training      │  Distributed
+         │   ═══════════ 100%   │  Progress
+         └──────────────────────┘
+                    ▼
+         ┌──────────────────────┐
+         │  🚀 Trained Model    │  Local
+         │  localhost:8000      │  Deployment
+         └──────────────────────┘
+```
 
 [![PyPI version](https://badge.fury.io/py/mlx-train.svg)](https://badge.fury.io/py/mlx-train)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
@@ -42,8 +58,8 @@ Watch your model train with real-time visualizations:
 
 ```bash
 Device Utilization:
-Device 0: [====================] 80.5% (12.8GB)
-Device 1: [===================] 75.2% (12.1GB)
+Device 1: [====================] 80.5% (12.8GB)
+Device 2: [===================] 75.2% (12.1GB)
 
 Training Progress:
 [====================] 50%
@@ -56,12 +72,19 @@ Metrics:
 
 ## ✨ Features
 
-- 🎯 **Zero-Config Setup**: Automatic environment setup and dependency management
 - 🚄 **Distributed Training**: Seamlessly scale across multiple Apple Silicon devices
-- 🧠 **Model Development**: Build custom architectures or use pre-built components
 - 🔧 **Hardware Optimization**: Automatic detection and configuration for optimal performance
+- 🎯 **Zero-Config Setup**: Automatic environment setup and dependency management
 - 📊 **Training Visualization**: Real-time metrics and progress tracking
+- 🧠 **Model Development**: Build custom architectures or use pre-built components
 - 🔄 **Export & Serve**: Deploy models locally or export for other platforms
+
+**Scale When Ready**:
+
+- 🔄 Start with any Apple Silicon Device (M1/M2/M3/M4)
+- 🔄 Add more devices anytime
+- 🔄 Automatic distributed training
+- 🔄 No code changes needed
 
 ## 🛠 Installation & Requirements
 
@@ -75,6 +98,7 @@ Metrics:
 ### Quick Install
 
 ```bash
+
 pip install mlx-train
 ```
 
