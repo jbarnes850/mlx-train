@@ -5,23 +5,25 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mlx-train"
 version = "0.1.0"
-description = "Distributed MLX Training Framework for Apple Silicon"
+description = "Distributed training framework for Apple Silicon using MLX"
 readme = "README.md"
-requires-python = ">=3.9"
-license = {text = "MIT"}
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["mlx", "machine learning", "distributed training", "apple silicon", "metal", "neural networks"]
 authors = [
-    {name = "MLX-Train Contributors", email = "mlx-train@example.com"}
+    { name = "Jarrod Barnes", email = "jbarnes850@gmail.com" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Distributed Computing",
+    "Operating System :: MacOS :: MacOS X",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3.12"
 ]
 dependencies = [
     "mlx>=0.21.0",
@@ -34,13 +36,17 @@ dependencies = [
     "pandas>=2.1.0",
     "langchain>=0.1.0",
     "typer>=0.9.0",
-    "rich>=13.7.0",
     "pydantic>=2.5.0",
     "fastapi>=0.109.0",
     "uvicorn>=0.27.0",
     "plotext>=5.2.8",
     "unstructured>=0.10.0",
     "python-magic>=0.4.27",
+    "psutil>=5.9.0",
+    "pyyaml>=6.0.1",
+    "colorama>=0.4.6",
+    "typing-extensions>=4.8.0",
+    "tqdm>=4.65.0"
 ]
 
 [project.optional-dependencies]
@@ -52,35 +58,26 @@ dev = [
     "isort>=5.12.0",
     "mypy>=1.5.0",
     "ruff>=0.1.0",
-    "pre-commit>=3.5.0",
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.4.0",
-    "mkdocstrings>=0.24.0",
-    "mkdocstrings-python>=1.7.0",
+    "pre-commit>=3.5.0"
 ]
-
-test = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.1.0",
-    "pytest-asyncio>=0.21.0"
+distributed = [
+    "netifaces>=0.11.0",    # For network interface detection
+    "zeroconf>=0.38.0",     # For device discovery
+    "paramiko>=3.3.1",      # For SSH connections
+    "tenacity>=8.2.3"       # For retry logic
 ]
-
-docs = [
-    "mkdocs>=1.5.0",
-    "mkdocs-material>=9.4.0",
-    "mkdocstrings>=0.24.0",
-    "mkdocstrings-python>=1.7.0",
+monitoring = [
+    "psutil>=5.9.0",        # Already in main deps, but listed for clarity
+    "py-cpuinfo>=9.0.0"     # For CPU info
 ]
-
-[project.urls]
-Homepage = "https://github.com/ml-explore/mlx-train"
-Documentation = "https://mlx-train.readthedocs.io"
-Repository = "https://github.com/ml-explore/mlx-train.git"
-Issues = "https://github.com/ml-explore/mlx-train/issues"
-Changelog = "https://github.com/ml-explore/mlx-train/blob/main/CHANGELOG.md"
+all = [
+    "mlx-train[dev]",
+    "mlx-train[distributed]",
+    "mlx-train[monitoring]"
+]
 
 [project.scripts]
-mlx-train = "mlx_train.cli.main:main"
+mlx-train = "mlx_train.cli:main"
 
 [tool.setuptools]
 packages = [
@@ -90,51 +87,50 @@ packages = [
     "mlx_train.data",
     "mlx_train.utils",
     "mlx_train.training",
-    "mlx_train.cli",
+    "mlx_train.cli"
+]
+
+[project.urls]
+Homepage = "https://github.com/jbarnes850/mlx-train"
+Documentation = "https://github.com/jbarnes850/mlx-train/docs"
+"Bug Tracker" = "https://github.com/jbarnes850/mlx-train/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=mlx_train --cov-report=term-missing"
+markers = [
+    "distributed: marks tests as distributed (deselect with '-m \"not distributed\"')",
+    "hardware: marks tests that require specific hardware",
+    "network: marks tests that require network access"
 ]
 
 [tool.black]
 line-length = 88
-target-version = ["py39"]
+target-version = ["py310", "py311", "py312"]
 include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-line_length = 88
+known_first_party = ["mlx_train"]
+known_third_party = ["mlx", "numpy", "pytest"]
 
 [tool.mypy]
-python_version = "3.9"
-strict = true
-ignore_missing_imports = true
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
 disallow_untyped_defs = true
-disallow_incomplete_defs = true
 check_untyped_defs = true
 disallow_untyped_decorators = true
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
-warn_return_any = true
 warn_unreachable = true
 show_error_codes = true
 
 [tool.ruff]
-select = [
-    "E",  # pycodestyle errors
-    "F",  # pyflakes
-    "B",  # flake8-bugbear
-    "I",  # isort
-]
-ignore = ["E501"]  # Line length handled by black
-target-version = "py39"
-line-length = 88
-
-[tool.pytest.ini_options]
-addopts = "--cov=mlx_train --cov-report=term-missing"
-testpaths = ["tests"]
-pythonpath = ["."]
-asyncio_mode = "auto"
+select = ["E", "F", "B", "I"]
+ignore = ["E501"]
+target-version = "py310"
   

@@ -10,17 +10,17 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Add gradient colors
+
 GRADIENT_1='\033[38;5;39m'  # Light blue
 GRADIENT_2='\033[38;5;38m'  # Cyan
 GRADIENT_3='\033[38;5;37m'  # Teal
 GRADIENT_4='\033[38;5;36m'  # Light green
 
-# Add new color and style definitions
+
 HIGHLIGHT_BG='\033[44m'  # Blue background
 HIGHLIGHT_FG='\033[97m'  # Bright white text
-UNDERLINE='\033[4m'      # Underline
-RESET='\033[0m'         # Reset all formatting
+UNDERLINE='\033[4m'      
+RESET='\033[0m'         
 
 spinner() {
     local pid=$1
@@ -60,7 +60,7 @@ progress_bar() {
 
 # Screen management
 clear_screen() {
-    echo -e "\033[2J\033[H"  # Clear screen and move cursor to top
+    echo -e "\033[2J\033[H"  
 }
 
 show_header() {
@@ -71,7 +71,7 @@ show_header() {
     echo -e "\n"
 }
 
-# Update show_step function for better formatting
+
 show_step() {
     local step=$1
     local description=$2
@@ -80,7 +80,7 @@ show_step() {
     clear_screen
     show_header
     
-    # Add top spacing
+  
     echo -e "\n"
     
     # Center the step indicator
@@ -95,10 +95,19 @@ show_step() {
 type_text() {
     local text=$1
     local delay=0.03
-    for ((i=0; i<${#text}; i++)); do
-        echo -n "${text:$i:1}"
-        sleep $delay
-    done
+    
+    # Split string into characters while preserving color codes
+    while IFS= read -r -n1 char; do
+        if [[ $char == $'\e' ]]; then
+            # Read and print the entire color code sequence
+            local code
+            read -r code
+            echo -ne "\e$code"
+        else
+            echo -n "$char"
+            sleep $delay
+        fi
+    done <<< "$text"
     echo
 }
 
@@ -108,25 +117,29 @@ show_welcome() {
     echo -e "${BLUE}"
     cat << "EOF"
 ╔══════════════════════════════════════════════════════════╗
-║     __  __ _     __  __  _____           _               ║
-║    |  \/  | |    \ \/ / |_   _| __ __ _ (_) _ __         ║
-║    | |\/| | |     \  /    | | | '__/ _` || || '_ \       ║
-║    | |  | | |___  /  \    | | | | | (_| || || | | |      ║
-║    |_|  |_|_____|/_/\_\   |_| |_|  \__,_||_||_| |_|      ║
+║  __  __ _     __  __  _____           _                  ║
+║ |  \/  | |    \ \/ / |_   _| __ __ _ (_) _ __            ║
+║ | |\/| | |     \  /    | | | '__/ _` || || '_ \          ║
+║ | |  | | |___  /  \    | | | | | (_| || || | | |         ║
+║ |_|  |_|_____|/_/\_\   |_| |_|  \__,_||_||_| |_|         ║
 ║                                                          ║
-║       🚀 Distributed AI Training on Apple Silicon        ║
-╚═════════════════════════════════���════════════════════════╝
+║   🚀  Distributed Training on Apple Silicon              ║
+╚══════════════════════════════════════════════════════════╝
 EOF
     echo -e "${NC}\n\n"
-    type_text "${GREEN}Welcome to MLX Train!${NC}"
-    echo -e "\n${YELLOW}Your high-performance distributed AI model training pipeline:${NC}\n"
-    echo -e "🛠️  Zero-config environment setup\n"
-    echo -e "🔧  Automatic hardware optimization for Apple Silicon\n" 
-    echo -e "🚄  Seamless distributed training across devices\n"
-    echo -e "📊  Real-time training metrics and visualization\n"
-    echo -e "🔄  One-click model export and deployment\n"
-    echo -e "\n"
-    read -p "Press Enter to start distributed training..."
+    
+    echo -ne "${GREEN}"
+    type_text "Welcome to MLX Train!"
+    echo -e "${NC}"
+    
+    echo -e "\n${YELLOW}Your high-performance distributed AI model training framework:${NC}\n"
+    echo -e "📦 Set up your environment automatically"
+    echo -e "🔍 Detect and optimize your hardware"
+    echo -e "🤖 Build your own AI model"
+    echo -e "🚀 Train efficiently across devices"
+    echo -e "🌐 Deploy and share your model"
+    echo -e "\n\n"
+    read -p "Press Enter to begin your journey..."
 }
 
 show_tooltips() {
@@ -288,21 +301,27 @@ setup_environment() {
     fi
     
     # Activate virtual environment
-    source venv/bin/activate || {
-        handle_error "env" "Failed to activate virtual environment"
-        exit 1
-    }
+    source venv/bin/activate
     
-    # Install dependencies with error handling
-    echo -e "${BLUE}Installing dependencies...${NC}"
-    pip install --upgrade pip > /dev/null 2>&1 &
-    spinner $!
+    # Upgrade pip
+    python -m pip install --upgrade pip
     
-    pip install -e ".[all]" > /dev/null 2>&1 || {
+    # Install the package with all dependencies
+    pip install -e ".[all]" || {
         handle_error "env" "Failed to install dependencies"
         exit 1
     }
-    spinner $!
+    
+    # Verify installation
+    python -c "
+import mlx
+import netifaces
+import zeroconf
+print('✓ All dependencies installed successfully')
+    " || {
+        handle_error "env" "Missing required dependencies"
+        exit 1
+    }
     
     echo -e "${GREEN}✓ Environment ready${NC}"
 }
@@ -554,9 +573,17 @@ handle_error() {
     local error_type=$1
     local details=$2
     
-    echo -e "\n${RED}⚠️ Oops! Something went wrong...${NC}"
-    
     case $error_type in
+        "env")
+            echo -e "${RED}Environment Error: ${details}${NC}"
+            echo -e "\nTrying to fix automatically..."
+            pip install -e ".[distributed]" --no-cache-dir || {
+                echo -e "${RED}Failed to install dependencies automatically.${NC}"
+                echo -e "Please try manually:\n"
+                echo -e "pip install netifaces zeroconf"
+                exit 1
+            }
+            ;;
         "network")
             echo -e "${YELLOW}Connection Issue Detected:${NC}"
             echo -e "• Unable to connect to other devices"
