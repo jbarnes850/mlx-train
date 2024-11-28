@@ -75,21 +75,19 @@ show_header() {
 show_step() {
     local step=$1
     local description=$2
-    local total=8  # Total steps
     
     clear_screen
-    show_header
     
-  
-    echo -e "\n"
+    # Add top spacing
+    echo -e "\n\n"
     
-    # Center the step indicator
-    printf "${BLUE}┌─────────────────────────────────────────────────┐${NC}\n"
-    printf "${BLUE}│${NC}  %-49s ${BLUE}│${NC}\n" "STEP ${step}/${total}"
-    printf "${BLUE}│${NC}  %-49s ${BLUE}│${NC}\n" "${description}"
-    printf "${BLUE}└─────────────────────────────────────────────────┘${NC}\n"
+    echo -e "${BLUE}┌────────────────────────────────────────────┐${NC}"
+    echo -e "${BLUE}│${NC} ${YELLOW}STEP ${step}/${TOTAL_STEPS}${NC}                                  ${BLUE}│${NC}"
+    echo -e "${BLUE}│${NC} ${GREEN}${description}${NC}                                ${BLUE}│${NC}"
+    echo -e "${BLUE}└────────────────────────────────────────────┘${NC}"
     
-    echo -e "\n"
+    # Add bottom spacing
+    echo -e "\n\n"
 }
 
 type_text() {
@@ -248,7 +246,7 @@ show_model_architecture() {
 │   Input Layer   │
 └────────┬────────┘
          ▼
-┌────────────────┐
+┌─────────────┐
 │  Transformer   │
 │     Block      │
 │ ┌──────────┐   │
@@ -329,21 +327,44 @@ print('✓ All dependencies installed successfully')
 # Enhanced hardware detection with recommendations
 show_hardware_status() {
     echo -e "\n${BLUE}🔍 Analyzing your hardware configuration...${NC}"
-    python -c "
-from mlx_train.core.hardware import HardwareConfig
-config = HardwareConfig()
+    python3 - <<EOF
+import platform
+import psutil
+import mlx.core as mx
 
-print(f'\n🖥️  Device Type: {config._detect_device_type()}')
-print(f'💾 Total Memory: {config.total_memory_gb:.1f}GB')
-print(f'⚡️ Performance: {config.total_tflops:.1f} TFLOPS\n')
+def get_device_type():
+    if platform.processor() == 'arm':
+        model = platform.machine()
+        if 'M1' in model:
+            return 'M1'
+        elif 'M2' in model:
+            return 'M2'
+        elif 'M3' in model:
+            return 'M3'
+        return 'Apple Silicon'
+    return platform.processor()
 
-if config.num_devices == 1:
-    print('💡 Single Device Mode - Perfect For:')
-    print('   • Model Development and Testing')
-    print('   • Small to Medium-Sized Models')
-    print('   • Quick Experiments')
-    print('\n💡 Tip: You can add more devices later!')
-    "
+def get_total_memory():
+    return psutil.virtual_memory().total / (1024**3)  # Convert to GB
+
+def estimate_tflops():
+    device_type = get_device_type()
+    if 'M1' in device_type:
+        return 11.0
+    elif 'M2' in device_type:
+        return 15.8
+    elif 'M3' in device_type:
+        return 40.0
+    return 10.0  # Default conservative estimate
+
+device_type = get_device_type()
+total_memory = get_total_memory()
+tflops = estimate_tflops()
+
+print(f'\n🖥️  Device Type: {device_type}')
+print(f'💾 Total Memory: {total_memory:.1f}GB')
+print(f'⚡️ Performance: {tflops:.1f} TFLOPS\n')
+EOF
 }
 
 # Guide users through distributed setup
@@ -557,15 +578,47 @@ select_dataset() {
 
 # Training configuration
 configure_training() {
-    echo -e "\n${BLUE}⚙️  Configure training:${NC}"
-    read -p "Batch size [default: 32]: " batch_size
-    batch_size=${batch_size:-32}
+    echo -e "\n${BLUE}⚙️  Configuring Training Parameters${NC}"
     
-    read -p "Number of epochs [default: 10]: " epochs
-    epochs=${epochs:-10}
+    # Load hardware config
+    python3 - <<EOF
+from mlx_train.core.hardware import HardwareConfig
+from mlx_train.core.memory_optimizer import MemoryOptimizer
+
+config = HardwareConfig()
+optimizer = MemoryOptimizer()
+
+# Calculate optimal batch size based on hardware
+memory_config = optimizer.optimize(model_size=1, batch_size=32)  # Default values
+batch_size = memory_config["batch_size"]
+grad_accum = memory_config["gradient_accumulation"]
+
+print(f"\n💾 Hardware Configuration:")
+print(f"• Device: {config.device_type}")
+print(f"• Memory: {config.total_memory_gb:.1f}GB")
+print(f"• Performance: {config.total_tflops:.1f} TFLOPS")
+print(f"\n📊 Training Configuration:")
+print(f"• Batch Size: {batch_size}")
+print(f"• Gradient Accumulation: {grad_accum}")
+print(f"• Learning Rate: 3e-4")  # Default learning rate
+EOF
+
+    # Let user customize parameters
+    echo -e "\n${YELLOW}Would you like to customize these parameters? [y/N]${NC}"
+    read -r customize
     
-    read -p "Enable mixed precision? [Y/n]: " mixed_precision
-    mixed_precision=${mixed_precision:-Y}
+    if [[ $customize =~ ^[Yy]$ ]]; then
+        read -p "Enter batch size (default: 32): " custom_batch
+        read -p "Enter learning rate (default: 3e-4): " custom_lr
+        
+        # Update config if values provided
+        if [ ! -z "$custom_batch" ]; then
+            echo "export BATCH_SIZE=$custom_batch" >> .env
+        fi
+        if [ ! -z "$custom_lr" ]; then
+            echo "export LEARNING_RATE=$custom_lr" >> .env
+        fi
+    fi
 }
 
 # Error handling functions
@@ -857,42 +910,33 @@ show_progress_bar() {
 
 # Update main() to use transitions:
 main() {
+    TOTAL_STEPS=8
+    
     show_welcome
-    add_spacing
-    show_tooltips
-    read -p "$(pulse_text 'Press Enter to begin your journey...' 3)"
-    
-    # Step 1
-    show_step 1 "Setting Up Environment"
+    show_step 1 "Environment Setup"
     setup_environment
-    add_spacing
-    show_progress_bar 1 8
-    read -p "Press Enter to continue..."
-    transition_step 1 2
     
-    # Step 2
-    show_step 2 "Detecting Hardware"
+    show_step 2 "Hardware Detection"
     show_hardware_status
-    setup_distributed
-    add_spacing
-    show_progress_bar 2 8
-    read -p "Press Enter to continue..."
-    transition_step 2 3
+    show_performance_estimates
     
-    # Continue pattern for other steps...
+    show_step 3 "Model Building"
+    build_model
     
-    # Final transition to completion
-    clear_screen
-    show_header
-    echo -e "\n${GREEN}✨ Journey Complete!${NC}"
-    show_progress_bar 8 8
-    echo -e "\n${BLUE}Your model is ready:${NC}"
-    echo -e "📊 Results: ./experiments"
-    echo -e "💾 Model: ./exports"
-    if [ $deploy_choice != 4 ]; then
-        echo -e "🌐 API: http://localhost:8000"
-    fi
-    echo -e "\n"
+    show_step 4 "Dataset Configuration"
+    setup_dataset
+    
+    show_step 5 "Training Configuration"
+    configure_training
+    
+    show_step 6 "Model Training"
+    run_training
+    
+    show_step 7 "Model Inference"
+    run_inference
+    
+    show_step 8 "Export & Deploy"
+    export_model
 }
 
 # menu selection function
@@ -906,43 +950,333 @@ select_option() {
     
     while true; do
         # Clear previous menu
-        for ((i=0; i<${#options[@]}; i++)); do
-            echo -e "\033[1A\033[2K"
-        done
+        tput cuu ${#options[@]}
         
         # Display menu
         for ((i=0; i<${#options[@]}; i++)); do
             if [ $i -eq $selected ]; then
-                echo -e "${HIGHLIGHT_BG}${HIGHLIGHT_FG}${UNDERLINE}▶ ${options[$i]}${RESET}"
+                echo -e "${HIGHLIGHT_BG}${HIGHLIGHT_FG}▶ ${options[$i]}${RESET}"
             else
                 echo -e "  ${options[$i]}"
             fi
         done
         
         # Read key input
-        read -rsn1 key
+        read -rsn3 key
         case "$key" in
-            $'\x1B')  # ESC sequence
-                read -rsn2 key
-                case "$key" in
-                    '[A')  # Up arrow
-                        ((selected--))
-                        [ $selected -lt 0 ] && selected=$((${#options[@]}-1))
-                        ;;
-                    '[B')  # Down arrow
-                        ((selected++))
-                        [ $selected -ge ${#options[@]} ] && selected=0
-                        ;;
-                esac
+            $'\x1b[A')  # Up arrow
+                ((selected--))
+                [ $selected -lt 0 ] && selected=$((${#options[@]}-1))
+                ;;
+            $'\x1b[B')  # Down arrow
+                ((selected++))
+                [ $selected -ge ${#options[@]} ] && selected=0
                 ;;
             '')  # Enter key
-                echo
                 tput cnorm  # Show cursor
+                echo
                 return $selected
                 ;;
         esac
     done
 }
 
-# Execute main function
-main 
+# Model building and configuration
+build_model() {
+    echo -e "\n${BLUE}🏗️  Model Building${NC}"
+    
+    options=("Simple Model" "Custom Model" "Transformer")
+    echo -e "\n${YELLOW}Select model type:${NC}"
+    select_option "${options[@]}"
+    model_choice=$?
+    
+    # Map choices to model types in registry
+    model_types=("simple" "custom" "transformer")
+    selected_model=${model_types[$model_choice]}
+    
+    python3 - <<EOF
+from mlx_train.models.builder import ModelBuilder
+from mlx_train.models.registry import ModelRegistry
+import json
+
+config = {
+    "hidden_size": 768,
+    "model_type": "${selected_model}"
+}
+
+# Build and verify model
+model = ModelBuilder.build(config)
+size_mb = ModelBuilder.estimate_model_size(model) / 1e6
+
+print(f"\n✨ Model created successfully")
+print(f"• Type: ${selected_model}")
+print(f"• Parameters: {size_mb:.1f}M")
+
+# Save config for later use
+with open("config.json", "w") as f:
+    json.dump(config, f)
+EOF
+}
+
+# Dataset configuration
+setup_dataset() {
+    echo -e "\n${BLUE}📊 Dataset Configuration${NC}"
+    
+    options=("Synthetic Data" "HuggingFace Dataset" "Custom Dataset")
+    echo -e "\n${YELLOW}Select dataset source:${NC}"
+    select_option "${options[@]}"
+    dataset_choice=$?
+    
+    python3 - <<EOF
+from mlx_train.data.manager import DatasetManager
+from mlx_train.data.preprocessor import DataPreprocessor
+import json
+
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+manager = DatasetManager(config)
+preprocessor = DataPreprocessor(config)
+
+dataset_types = ["synthetic", "huggingface", "custom"]
+dataset_type = dataset_types[${dataset_choice}]
+
+dataset = manager.load_dataset(dataset_type)
+processed_dataset = preprocessor.prepare_batch(dataset)
+
+print(f"\n✨ Dataset loaded successfully")
+print(f"• Samples: {len(dataset):,}")
+print(f"• Memory usage: {manager.estimate_memory_usage(dataset) / 1e9:.1f}GB")
+EOF
+}
+
+# Training configuration and execution
+run_training() {
+    echo -e "\n${BLUE}🚀 Training Configuration${NC}"
+    
+    # Load existing config
+    python3 - <<EOF
+from mlx_train.core.hardware import HardwareConfig
+from mlx_train.core.memory_optimizer import MemoryOptimizer
+import json
+
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+hardware = HardwareConfig()
+optimizer = MemoryOptimizer()
+
+# Calculate optimal batch size
+memory_config = optimizer.optimize(
+    model_size=config.get("hidden_size", 768),
+    batch_size=32
+)
+
+print(f"\n💻 Hardware Configuration:")
+print(f"• Devices: {hardware.num_devices}")
+print(f"• Memory: {hardware.total_memory_gb:.1f}GB")
+print(f"• Performance: {hardware.total_tflops:.1f} TFLOPS")
+
+print(f"\n📊 Training Configuration:")
+print(f"• Batch Size: {memory_config['batch_size']}")
+print(f"• Gradient Accumulation: {memory_config['gradient_accumulation']}")
+EOF
+
+    # Start training with enhanced monitoring
+    echo -e "\n${BLUE}Starting training...${NC}"
+    
+    trap 'handle_training_error "interrupted" "Training interrupted by user"' INT
+    
+    python3 - <<EOF
+from mlx_train.training import Trainer
+import json
+
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+trainer = Trainer(config)
+
+try:
+    for epoch, metrics in trainer.train():
+        # Update live metrics
+        show_training_metrics(epoch, metrics)
+        
+        # Save checkpoint periodically
+        if epoch % 5 == 0:
+            manage_checkpoints()
+            
+        # Validate periodically
+        if epoch % 10 == 0:
+            validate_model()
+            
+except Exception as e:
+    handle_training_error("runtime", str(e))
+    exit(1)
+
+print("\n✨ Training completed successfully!")
+EOF
+}
+
+# Inference setup
+run_inference() {
+    echo -e "\n${BLUE}🤖 Model Inference${NC}"
+    
+    options=("Interactive Console" "API Server")
+    echo -e "\n${YELLOW}Select inference mode:${NC}"
+    select_option "${options[@]}"
+    inference_mode=$?
+    
+    case $inference_mode in
+        0)  # Interactive Console
+            python3 - <<EOF
+from mlx_train.serving import InteractiveConsole
+console = InteractiveConsole(model_path="exports/model.mlx")
+console.start()
+EOF
+            ;;
+        1)  # API Server
+            python3 - <<EOF
+from mlx_train.serving import ModelServer
+server = ModelServer(
+    model_path="exports/model.mlx",
+    port=8000
+)
+print(f"\n✨ API server running at http://localhost:8000")
+server.serve()
+EOF
+            ;;
+    esac
+}
+
+# Export and deployment
+export_model() {
+    echo -e "\n${BLUE}📦 Export Model${NC}"
+    
+    options=("MLX Format" "GGUF Format" "Both")
+    echo -e "\n${YELLOW}Select export format:${NC}"
+    select_option "${options[@]}"
+    format_choice=$?
+    
+    python3 - <<EOF
+from mlx_train.models.architectures.simple_model import SimpleModel
+from pathlib import Path
+import json
+
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+model = SimpleModel.from_config(config)
+export_path = Path("exports")
+
+if ${format_choice} in [0, 2]:
+    model.export(export_path, format="mlx")
+    print(f"\n✨ Exported MLX model to {export_path}/mlx")
+
+if ${format_choice} in [1, 2]:
+    model.export(export_path, format="gguf")
+    print(f"\n✨ Exported GGUF model to {export_path}/gguf")
+EOF
+}
+
+# Training visualization with live metrics
+show_training_metrics() {
+    local epoch=$1
+    local metrics=$2
+    
+    echo -e "\n${BLUE}📊 Training Metrics${NC}"
+    python3 - <<EOF
+from mlx_train.visualization import MetricsVisualizer
+import json
+
+with open("${metrics}", "r") as f:
+    data = json.load(f)
+
+visualizer = MetricsVisualizer()
+visualizer.update(data)
+visualizer.display_live()
+EOF
+}
+
+# Checkpoint management
+manage_checkpoints() {
+    echo -e "\n${BLUE}💾 Managing Checkpoints${NC}"
+    
+    python3 - <<EOF
+from mlx_train.utils.checkpoints import CheckpointManager
+from pathlib import Path
+import json
+
+checkpoint_dir = Path("checkpoints")
+manager = CheckpointManager(
+    checkpoint_dir=checkpoint_dir,
+    max_checkpoints=5  # Keep last 5 checkpoints
+)
+
+# Save checkpoint with metrics
+with open("metrics.json", "r") as f:
+    metrics = json.load(f)
+    
+manager.save(
+    model_state="model_state.pt",
+    metrics=metrics,
+    keep_best=True
+)
+
+# Clean up old checkpoints
+manager.prune()
+
+print(f"\n✨ Checkpoint saved successfully")
+print(f"📁 Location: {checkpoint_dir}")
+EOF
+}
+
+# Model validation
+validate_model() {
+    echo -e "\n${BLUE}🔍 Validating Model${NC}"
+    
+    python3 - <<EOF
+from mlx_train.evaluation import ModelEvaluator
+import json
+
+with open("config.json", "r") as f:
+    config = json.load(f)
+
+evaluator = ModelEvaluator(config)
+metrics = evaluator.evaluate()
+
+print(f"\n📊 Validation Results:")
+print(f"• Loss: {metrics['loss']:.4f}")
+print(f"• Accuracy: {metrics['accuracy']:.2%}")
+print(f"• Throughput: {metrics['throughput']:.1f} samples/sec")
+
+# Save metrics
+with open("metrics.json", "w") as f:
+    json.dump(metrics, f)
+EOF
+}
+
+# Enhanced error recovery
+handle_training_error() {
+    local error_type=$1
+    local details=$2
+    
+    echo -e "\n${RED}⚠️ Training Error Detected${NC}"
+    
+    python3 - <<EOF
+from mlx_train.utils.recovery import TrainingRecovery
+import json
+
+recovery = TrainingRecovery()
+state = recovery.analyze_error("${error_type}", """${details}""")
+
+if state['can_recover']:
+    print(f"\n✨ Automatic recovery possible")
+    print(f"• Issue: {state['diagnosis']}")
+    print(f"• Action: {state['action']}")
+    recovery.apply_fix(state['action'])
+else:
+    print(f"\n❌ Manual intervention required")
+    print(f"• Issue: {state['diagnosis']}")
+    print(f"• Suggestion: {state['suggestion']}")
+EOF
+} 
