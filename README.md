@@ -18,7 +18,7 @@ Train and deploy AI models across multiple Apple Silicon devices with automatic 
 │    Node 1       │      │    Node 2       │  Cluster
 └────────┬────────┘      └────────┬────────┘
          │                        │
-         └──────────┬────────────┘
+         └──────────┬────────────-┘
                     ▼
          ┌──────────────────────┐
          │    MLX Training      │  Distributed
