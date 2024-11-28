@@ -31,16 +31,22 @@ Train and deploy AI models across multiple Apple Silicon devices with automatic 
          └──────────────────────┘
 ```
 
-[![PyPI version](https://badge.fury.io/py/mlx-train.svg)](https://badge.fury.io/py/mlx-train)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## ⚡️ Quick Start & Interactive Script
 
 ```bash
-# Clone and start
+# Clone the repository
 git clone https://github.com/jbarnes850/mlx-train
 cd mlx-train
+
+# Install dependencies
+pip install mlx  # Core MLX framework
+pip install -r requirements.txt  # Additional dependencies
+
+# Make the script executable
+chmod +x scripts/mlx-train.sh
 
 # Run the interactive training script
 ./scripts/mlx-train.sh
