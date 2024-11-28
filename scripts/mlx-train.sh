@@ -16,6 +16,12 @@ GRADIENT_2='\033[38;5;38m'  # Cyan
 GRADIENT_3='\033[38;5;37m'  # Teal
 GRADIENT_4='\033[38;5;36m'  # Light green
 
+# Add new color and style definitions
+HIGHLIGHT_BG='\033[44m'  # Blue background
+HIGHLIGHT_FG='\033[97m'  # Bright white text
+UNDERLINE='\033[4m'      # Underline
+RESET='\033[0m'         # Reset all formatting
+
 spinner() {
     local pid=$1
     local delay=0.1
@@ -65,24 +71,35 @@ show_header() {
     echo -e "\n"
 }
 
-# Update show_step function
+# Update show_step function for better formatting
 show_step() {
     local step=$1
     local description=$2
+    local total=8  # Total steps
     
     clear_screen
     show_header
     
     # Add top spacing
-    echo -e "\n\n"
+    echo -e "\n"
     
-    echo -e "${BLUE}┌────────────────────────────────────────────┐${NC}"
-    echo -e "${BLUE}│${NC} ${YELLOW}STEP ${step}/${TOTAL_STEPS}${NC}                                  ${BLUE}│${NC}"
-    echo -e "${BLUE}│${NC} ${GREEN}${description}${NC}                                ${BLUE}│${NC}"
-    echo -e "${BLUE}└────────────────────────────────────────────┘${NC}"
+    # Center the step indicator
+    printf "${BLUE}┌─────────────────────────────────────────────────┐${NC}\n"
+    printf "${BLUE}│${NC}  %-49s ${BLUE}│${NC}\n" "STEP ${step}/${total}"
+    printf "${BLUE}│${NC}  %-49s ${BLUE}│${NC}\n" "${description}"
+    printf "${BLUE}└─────────────────────────────────────────────────┘${NC}\n"
     
-    # Add bottom spacing
-    echo -e "\n\n"
+    echo -e "\n"
+}
+
+type_text() {
+    local text=$1
+    local delay=0.03
+    for ((i=0; i<${#text}; i++)); do
+        echo -n "${text:$i:1}"
+        sleep $delay
+    done
+    echo
 }
 
 # Update show_welcome
@@ -98,10 +115,10 @@ show_welcome() {
 ║    |_|  |_|_____|/_/\_\   |_| |_|  \__,_||_||_| |_|      ║
 ║                                                          ║
 ║       🚀 Distributed AI Training on Apple Silicon        ║
-╚══════════════════════════════════════════════════════════╝
+╚═════════════════════════════════���════════════════════════╝
 EOF
     echo -e "${NC}\n\n"
-    echo -e "${GREEN}Welcome to MLX Train!${NC}"
+    type_text "${GREEN}Welcome to MLX Train!${NC}"
     echo -e "\n${YELLOW}Your high-performance distributed AI model training pipeline:${NC}\n"
     echo -e "🛠️  Zero-config environment setup\n"
     echo -e "🔧  Automatic hardware optimization for Apple Silicon\n" 
@@ -177,7 +194,7 @@ from mlx_train.core.hardware import HardwareConfig
 config = HardwareConfig()
 flops = config.total_tflops
 
-print(f'┌────────────────────────────────────────────────┐')
+print(f'┌──────────────────────────────────────────────┐')
 print(f'│ Your Hardware:                                 │')
 print(f'│ • Device: Apple Silicon                       │')
 print(f'│ • Memory: {config.total_memory_gb:.1f}GB available              │')
@@ -187,7 +204,7 @@ print(f'└───────────────────────
 print(f'\n{BLUE}📊 Estimated Performance:{NC}')
 print(f'┌────────────────────────────────────────────────┐')
 print(f'│ Model Size     Training Time    Memory Usage   │')
-print(f'│ ───────────────────────────────────────────── │')
+print(f'│ ──────────────────────────────────────────── │')
 print(f'│ Small (0.5B)   {0.5 * 3600 / flops:.1f} hours      {0.5:.1f}GB         │')
 print(f'│ Medium (2B)    {2.0 * 3600 / flops:.1f} hours      {2.0:.1f}GB         │')
 print(f'│ Large (7B)     {7.0 * 3600 / flops:.1f} hours      {7.0:.1f}GB         │')
@@ -199,7 +216,7 @@ print(f'│ ✓ Model Development and Testing               │')
 print(f'│ ✓ Small to Medium Model Training             │')
 print(f'│ ✓ Fine-tuning Existing Models                │')
 print(f'│ ✓ Quick Experiments                          │')
-print(f'└────────────────────────────────────���───────────┘')
+print(f'└───────────────────────────────────────────────┘')
 
 if config.total_memory_gb >= 16:
     print(f'\n{GREEN}✨ Great! Your device has plenty of memory for most models.{NC}')
@@ -296,20 +313,16 @@ show_hardware_status() {
     python -c "
 from mlx_train.core.hardware import HardwareConfig
 config = HardwareConfig()
-devices = config.num_devices
-memory = config.total_memory_gb
 
-print(f'\n🖥️  Detected {devices} Apple Silicon device(s)')
-print(f'💾 Total available memory: {memory:.1f}GB\n')
+print(f'\n🖥️  Device Type: {config._detect_device_type()}')
+print(f'💾 Total Memory: {config.total_memory_gb:.1f}GB')
+print(f'⚡️ Performance: {config.total_tflops:.1f} TFLOPS\n')
 
-if devices > 1:
-    print('✨ Great! Multi-device training enabled.')
-    print('   Your training will automatically use all devices.')
-else:
-    print('💡 Single device mode active - perfect for:')
-    print('   • Model development and testing')
-    print('   • Small to medium-sized models')
-    print('   • Quick experiments')
+if config.num_devices == 1:
+    print('💡 Single Device Mode - Perfect For:')
+    print('   • Model Development and Testing')
+    print('   • Small to Medium-Sized Models')
+    print('   • Quick Experiments')
     print('\n💡 Tip: You can add more devices later!')
     "
 }
@@ -336,13 +349,19 @@ print(f'💾 Total Memory: {config.total_memory_gb:.1f}GB')
     "
     
     echo -e "\n${YELLOW}Would you like to add more Apple Silicon devices?${NC}"
-    echo -e "1) Yes, connect via Network (WiFi/Ethernet)"
-    echo -e "2) Yes, connect via Thunderbolt"
-    echo -e "3) No, continue with current device(s)"
-    read -p "Enter choice [1-3]: " connect_choice
+    echo -e "${YELLOW}Use arrow keys to select and Enter to confirm:${NC}\n"
+    
+    options=(
+        "Connect via Network (WiFi/Ethernet)"
+        "Connect via Thunderbolt"
+        "Continue with current device(s)"
+    )
+    
+    select_option "${options[@]}"
+    connect_choice=$?
     
     case $connect_choice in
-        1)
+        0)  # Network connection
             echo -e "\n${BLUE}📡 Network Connection Guide:${NC}"
             echo -e "1. Ensure all devices are on the same network"
             echo -e "2. Note down the IP addresses of each device"
@@ -364,7 +383,7 @@ print(f'💪 Total Power: {config.total_tflops:.2f} TFLOPS')
             fi
             ;;
             
-        2)
+        1)  # Thunderbolt connection
             echo -e "\n${BLUE}🔌 Thunderbolt Connection Guide:${NC}"
             echo -e "1. Connect devices via Thunderbolt cable"
             echo -e "2. Ensure devices are powered on"
@@ -386,7 +405,7 @@ print(f'💪 Total Power: {config.total_tflops:.2f} TFLOPS')
             fi
             ;;
             
-        3)
+        2)
             echo -e "${GREEN}Continuing with current device(s)${NC}"
             ;;
             
@@ -413,79 +432,84 @@ print(f'Large Model (7B):    {large:.1f} hours')
     fi
 }
 
-# Add after setup_distributed() function:
-
+# device discovery
 discover_devices() {
     echo -e "\n${BLUE}🔍 Scanning for Apple Silicon devices...${NC}"
     
-    # Get current device info
-    local current_device=$(system_profiler SPHardwareDataType | grep "Model Name" | cut -d: -f2- | xargs)
-    local current_memory=$(system_profiler SPHardwareDataType | grep "Memory:" | cut -d: -f2- | xargs)
+    # Show scanning animation
+    echo -ne "${YELLOW}Scanning network"
+    for i in {1..3}; do
+        echo -ne "."
+        sleep 0.5
+    done
+    echo -e "${NC}\n"
     
-    echo -e "\n${GREEN}Current Setup:${NC}"
-    echo -e "┌─────────────────────┐"
-    echo -e "│ $current_device     │ ← Active"
-    echo -e "│ Memory: $current_memory   │"
-    echo -e "│ Status: Connected   │"
-    echo -e "└─────────────────────┘"
-    
-    # Scan network for other Apple Silicon devices
-    echo -e "\n${YELLOW}Scanning network...${NC}"
-    progress_bar 2 "Scanning"
-    
-    # Use arp to find devices and filter for Apple
-    local discovered=$(arp -a | grep "(Apple)")
-    if [ ! -z "$discovered" ]; then
-        echo -e "\n${GREEN}Found Apple devices:${NC}"
-        while IFS= read -r line; do
-            local device_ip=$(echo $line | grep -oE "\([0-9.]+\)" | tr -d '()')
-            echo -e "┌─────────────────────┐"
-            echo -e "│ Device at: $device_ip│"
-            echo -e "│ Status: Available   │"
-            echo -e "└─────────────────────┘"
-            echo -e "       ↑"
-        done <<< "$discovered"
-    else
-        echo -e "\n${YELLOW}No additional Apple devices found${NC}"
-    fi
+    # Get device information using Python
+    python -c "
+from mlx_train.core.discovery import DeviceDiscovery
+discovery = DeviceDiscovery()
+devices = discovery.discover_devices()
+
+# Print local device first
+for device in devices:
+    if device.status == 'active':
+        print(f'${GREEN}Current Device:${NC}')
+        print(f'┌─────────────────────────────┐')
+        print(f'│ {device.device_type:<23} │ ← Active')
+        print(f'│ Memory: {device.memory_gb:<4.1f} GB        │')
+        print(f'│ Status: Connected          │')
+        print(f'└─────────────────────────────┘')
+
+# Print discovered devices
+discovered = [d for d in devices if d.status == 'available']
+if discovered:
+    print(f'\n${GREEN}Found Apple Silicon Devices:${NC}')
+    for device in discovered:
+        print(f'┌─────────────────────────────┐')
+        print(f'│ {device.device_type:<23} │')
+        print(f'│ IP: {device.ip_address:<18} │')
+        print(f'│ Memory: {device.memory_gb:<4.1f} GB        │')
+        print(f'│ Status: Available          │')
+        print(f'└─────────────────────────────┘')
+        print(f'            ↑')
+else:
+    print(f'\n${YELLOW}No additional Apple devices found${NC}')
+"
 }
 
-# Enhanced model selection with descriptions
+# model selection
 select_model() {
     echo -e "\n${BLUE}🧠 Choose Your Model Architecture${NC}"
-    echo -e "\n${YELLOW}Available architectures:${NC}"
-    echo -e "1) ${GREEN}Transformer${NC} (Recommended)"
-    echo -e "   • Best for language tasks"
-    echo -e "   • State-of-the-art architecture"
-    echo -e "   • Efficient on Apple Silicon"
-    echo
-    echo -e "2) ${GREEN}MLP${NC}"
-    echo -e "   • Simple and fast"
-    echo -e "   • Good for basic tasks"
-    echo -e "   • Excellent for learning"
-    echo
-    echo -e "3) ${GREEN}Custom Architecture${NC}"
-    echo -e "    Full flexibility"
-    echo -e "   • Advanced users"
-    echo -e "   • Maximum control"
+    echo -e "\n${YELLOW}Use arrow keys to select and Enter to confirm:${NC}\n"
     
-    read -p "Enter your choice [1-3]: " model_choice
+    options=(
+        "Transformer (Recommended)
+         • Best for language tasks
+         • State-of-the-art architecture
+         • Efficient on Apple Silicon"
+        
+        "MLP
+         • Simple and fast
+         • Good for basic tasks
+         • Excellent for learning"
+        
+        "Custom Architecture
+         • Full flexibility
+         • Advanced users
+         • Maximum control"
+    )
+    
+    select_option "${options[@]}"
+    model_choice=$?
     
     case $model_choice in
-        1) 
-            model_type="transformer"
-            echo -e "${GREEN}✓ Selected Transformer architecture${NC}"
-            ;;
-        2) 
-            model_type="mlp"
-            echo -e "${GREEN}✓ Selected MLP architecture${NC}"
-            ;;
-        3) 
-            model_type="custom"
-            echo -e "${GREEN}✓ Selected Custom architecture${NC}"
-            ;;
-        *) echo -e "${RED}Invalid choice${NC}"; exit 1;;
+        0) model_type="transformer";;
+        1) model_type="mlp";;
+        2) model_type="custom";;
     esac
+    
+    echo -e "${GREEN}✓ Selected: ${model_type}${NC}\n"
+    show_model_architecture $model_type
 }
 
 # Dataset selection
@@ -742,26 +766,46 @@ add_spacing() {
     echo -e "\n\n"  # Double spacing
 }
 
-# Add transition functions
+# Update transition_step for smoother transitions
 transition_step() {
     local from=$1
     local to=$2
     
+    # Fade out current step
     clear_screen
     show_header
     echo -e "\n${BLUE}Completing Step ${from}...${NC}"
     
-    # Show subtle progress dots
-    for i in {1..3}; do
+    # Animated progress dots
+    for i in {1..4}; do
         echo -ne "${BLUE}."
-        sleep 0.2
+        sleep 0.15
+        echo -ne "\033[1D \033[1D"  # Clear the dot
+        sleep 0.15
     done
-    echo -e "\n"
     
-    # Show next step preview
-    echo -e "${GREEN}Preparing Step ${to}${NC}"
-    progress_bar 0.5 "Loading"
+    # Show completion
+    echo -e "\n${GREEN}✓ Step ${from} Complete${NC}"
+    sleep 0.5
     
+    # Transition to next step
+    echo -e "\n${BLUE}Preparing Step ${to}${NC}"
+    
+    # Gradient progress bar
+    local width=40
+    for i in $(seq 1 $width); do
+        local gradient=$((i * 4 / width))
+        case $gradient in
+            0) color=$GRADIENT_1 ;;
+            1) color=$GRADIENT_2 ;;
+            2) color=$GRADIENT_3 ;;
+            3) color=$GRADIENT_4 ;;
+        esac
+        echo -ne "${color}▓${NC}"
+        sleep 0.02
+    done
+    
+    sleep 0.3
     clear_screen
 }
 
@@ -789,7 +833,7 @@ main() {
     show_welcome
     add_spacing
     show_tooltips
-    read -p "Press Enter to begin your journey..."
+    read -p "$(pulse_text 'Press Enter to begin your journey...' 3)"
     
     # Step 1
     show_step 1 "Setting Up Environment"
@@ -822,6 +866,55 @@ main() {
         echo -e "🌐 API: http://localhost:8000"
     fi
     echo -e "\n"
+}
+
+# menu selection function
+select_option() {
+    local options=("$@")
+    local selected=0
+    local key
+    
+    # Hide cursor
+    tput civis
+    
+    while true; do
+        # Clear previous menu
+        for ((i=0; i<${#options[@]}; i++)); do
+            echo -e "\033[1A\033[2K"
+        done
+        
+        # Display menu
+        for ((i=0; i<${#options[@]}; i++)); do
+            if [ $i -eq $selected ]; then
+                echo -e "${HIGHLIGHT_BG}${HIGHLIGHT_FG}${UNDERLINE}▶ ${options[$i]}${RESET}"
+            else
+                echo -e "  ${options[$i]}"
+            fi
+        done
+        
+        # Read key input
+        read -rsn1 key
+        case "$key" in
+            $'\x1B')  # ESC sequence
+                read -rsn2 key
+                case "$key" in
+                    '[A')  # Up arrow
+                        ((selected--))
+                        [ $selected -lt 0 ] && selected=$((${#options[@]}-1))
+                        ;;
+                    '[B')  # Down arrow
+                        ((selected++))
+                        [ $selected -ge ${#options[@]} ] && selected=0
+                        ;;
+                esac
+                ;;
+            '')  # Enter key
+                echo
+                tput cnorm  # Show cursor
+                return $selected
+                ;;
+        esac
+    done
 }
 
 # Execute main function
